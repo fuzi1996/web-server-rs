@@ -42,9 +42,7 @@ function Install-Targets {
     Write-Info "安装目标平台..."
     
     $targets = @(
-        "x86_64-unknown-linux-gnu",
-        "x86_64-pc-windows-msvc",
-        "x86_64-apple-darwin"
+        "x86_64-pc-windows-msvc"
     )
     
     foreach ($target in $targets) {
@@ -96,12 +94,10 @@ function Main {
         New-Item -ItemType Directory -Path "dist" | Out-Null
     }
     
-    # 构建各平台版本
-    Build-Target "x86_64-unknown-linux-gnu" "dist/web-server-linux-x64"
+    # 构建Windows版本
     Build-Target "x86_64-pc-windows-msvc" "dist/web-server-windows-x64.exe"
-    Build-Target "x86_64-apple-darwin" "dist/web-server-macos-x64"
     
-    Write-Info "所有平台构建完成！"
+    Write-Info "Windows版本构建完成！"
     Write-Info "输出文件:"
     Get-ChildItem "dist" | Format-Table Name, Length, LastWriteTime
     
