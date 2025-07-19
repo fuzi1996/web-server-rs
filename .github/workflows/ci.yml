@@ -38,15 +38,19 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Check code
+        shell: bash
         run: cargo check
 
       - name: Run tests
+        shell: bash
         run: cargo test
 
       - name: Run clippy
+        shell: bash
         run: cargo clippy -- -D warnings
 
       - name: Check formatting
+        shell: bash
         run: cargo fmt -- --check
 
   security:
@@ -63,8 +67,10 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install cargo-audit
+        shell: bash
         run: cargo install cargo-audit
 
       - name: Run security audit
+        shell: bash
         run: cargo audit || echo "Security audit failed, but continuing..."
         continue-on-error: true 
