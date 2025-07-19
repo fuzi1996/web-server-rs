@@ -157,6 +157,35 @@ cargo check
 cargo clippy
 ```
 
+## GitHub Actions
+
+本项目使用 GitHub Actions 进行持续集成和自动发布。
+
+### 工作流
+
+- **CI**: 代码质量检查、测试和安全审计
+- **Build**: 多平台构建
+- **Release**: 手动发布，生成可执行文件
+
+### 手动发布
+
+1. 进入 GitHub 仓库的 Actions 页面
+2. 选择 "Release" 工作流
+3. 点击 "Run workflow"
+4. 填写版本号 (如 v1.0.0)
+5. 填写发布说明
+6. 等待构建完成
+
+### 下载预构建版本
+
+在 [Releases](https://github.com/fuzi1996/web-server-rs/releases) 页面下载对应平台的可执行文件：
+
+- `web-server-linux-x64` - Linux 版本
+- `web-server-windows-x64.exe` - Windows 版本
+- `web-server-macos-x64` - macOS 版本
+
+详细说明请查看 [GitHub Actions 文档](.github/README.md)。
+
 ## 示例
 
 ### 启动服务器

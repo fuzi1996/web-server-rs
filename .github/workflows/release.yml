@@ -1,0 +1,158 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes'
+        required: false
+        type: string
+        default: 'Release'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_name: web-server-linux-x64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            asset_name: web-server-windows-x64.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            asset_name: web-server-macos-x64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build release binary
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp target/${{ matrix.target }}/release/web-server.exe ${{ matrix.asset_name }}
+          else
+            cp target/${{ matrix.target }}/release/web-server ${{ matrix.asset_name }}
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.version != ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: dist/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }}
+          body: |
+            ## Release Notes
+            
+            ${{ github.event.inputs.release_notes }}
+            
+            ## Downloads
+            
+            This release includes pre-built binaries for the following platforms:
+            
+            - **Linux (x64)**: `web-server-linux-x64`
+            - **Windows (x64)**: `web-server-windows-x64.exe`
+            - **macOS (x64)**: `web-server-macos-x64`
+            
+            ## Installation
+            
+            Download the appropriate binary for your platform and make it executable:
+            
+            ```bash
+            # Linux/macOS
+            chmod +x web-server-linux-x64
+            ./web-server-linux-x64 8080 .
+            
+            # Windows
+            web-server-windows-x64.exe 8080 .
+            ```
+            
+            ## Usage
+            
+            ```bash
+            # Basic usage
+            ./web-server <port> <working-directory>
+            
+            # Examples
+            ./web-server 8080 .
+            ./web-server 3000 /path/to/files
+            ```
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/web-server-linux-x64
+          asset_name: web-server-linux-x64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/web-server-windows-x64.exe
+          asset_name: web-server-windows-x64.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/web-server-macos-x64
+          asset_name: web-server-macos-x64
+          asset_content_type: application/octet-stream 
