@@ -68,19 +68,6 @@ cargo clippy             # 代码检查
 cargo fmt                # 格式化
 ```
 
-## 发布
-
-### 手动发布
-1. GitHub Actions → Release 工作流
-2. 填写版本号和说明
-3. 等待构建完成
-
-### 下载预构建版本
-在 [Releases](https://github.com/fuzi1996/web-server-rs/releases) 页面下载：
-- `web-server-linux-x64`
-- `web-server-windows-x64.exe`
-- `web-server-macos-x64`
-
 ## 故障排除
 
 ### 常见问题

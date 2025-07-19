@@ -68,19 +68,6 @@ cargo clippy             # Code check
 cargo fmt                # Format
 ```
 
-## Release
-
-### Manual Release
-1. GitHub Actions → Release workflow
-2. Fill in version number and description
-3. Wait for build completion
-
-### Download Pre-built Versions
-Download from [Releases](https://github.com/fuzi1996/web-server-rs/releases):
-- `web-server-linux-x64`
-- `web-server-windows-x64.exe`
-- `web-server-macos-x64`
-
 ## Troubleshooting
 
 ### Common Issues
