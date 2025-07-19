@@ -2,11 +2,24 @@ use std::{env, fs};
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
-use log::{error, info};
+use log::{error, info, LevelFilter};
 use web_server::ThreadPool;
 
 fn main() {
-    env_logger::init();
+    // 初始化日志
+    // 如果没有配置日志级别，设置默认级别为info
+    if let Ok(log_level) = std::env::var("LOG_LEVEL") {
+        let log_level = log_level.parse::<LevelFilter>().unwrap_or(LevelFilter::Info);
+        env_logger::Builder::from_default_env()
+            .filter_level(log_level)
+            .target(env_logger::Target::Stdout)
+            .init();
+    } else {
+        env_logger::Builder::from_default_env()
+            .filter_level(LevelFilter::Info)
+            .target(env_logger::Target::Stdout)
+            .init();
+    }
 
     let args: Vec<String> = env::args().collect();
     let port = args.get(1).unwrap();
@@ -19,7 +32,16 @@ fn main() {
         }
     };
 
-    info!("Server is running on port 7878");
+    // 支持设置工作目录
+    let work_dir = args.get(2).unwrap();
+    let work_dir = work_dir.parse::<String>().unwrap_or(".".to_string());
+    if !Path::new(&work_dir).exists() {
+        error!("Work directory {} does not exist", work_dir);
+        std::process::exit(1);
+    }
+    std::env::set_current_dir(work_dir.clone()).unwrap();
+
+    info!("Server is running on port {} at {}", port, work_dir);
     let pool = ThreadPool::new(4);
     for stream in listener.incoming() {
         let connection = stream.unwrap();
