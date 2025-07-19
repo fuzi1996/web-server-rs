@@ -25,6 +25,10 @@ rustc --version
 cargo --version
 ```
 
+**版本要求**:
+- 最低版本: Rust 1.76.0
+- 推荐版本: 最新稳定版
+
 ### 编译项目
 
 ```bash

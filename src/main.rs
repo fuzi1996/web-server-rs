@@ -1,15 +1,17 @@
-use std::{env, fs};
+use log::{error, info, LevelFilter};
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
-use log::{error, info, LevelFilter};
+use std::{env, fs};
 use web_server::ThreadPool;
 
 fn main() {
     // 初始化日志
     // 如果没有配置日志级别，设置默认级别为info
     if let Ok(log_level) = std::env::var("LOG_LEVEL") {
-        let log_level = log_level.parse::<LevelFilter>().unwrap_or(LevelFilter::Info);
+        let log_level = log_level
+            .parse::<LevelFilter>()
+            .unwrap_or(LevelFilter::Info);
         env_logger::Builder::from_default_env()
             .filter_level(log_level)
             .target(env_logger::Target::Stdout)
@@ -22,24 +24,30 @@ fn main() {
     }
 
     let args: Vec<String> = env::args().collect();
-    let port = args.get(1).map(|s| s.parse::<u16>().unwrap_or(7878)).unwrap_or(7878);
-    let listener = match TcpListener::bind(format!("127.0.0.1:{}", port)) {
+    let port = args
+        .get(1)
+        .map(|s| s.parse::<u16>().unwrap_or(7878))
+        .unwrap_or(7878);
+    let listener = match TcpListener::bind(format!("127.0.0.1:{port}")) {
         Ok(listener) => listener,
         Err(e) => {
-            error!("Failed to bind to port {}: {}", port, e);
+            error!("Failed to bind to port {port}: {e}");
             std::process::exit(1);
         }
     };
 
     // 支持设置工作目录
-    let work_dir = args.get(2).map(|s| s.to_string()).unwrap_or(".".to_string());
+    let work_dir = args
+        .get(2)
+        .map(|s| s.to_string())
+        .unwrap_or(".".to_string());
     if !Path::new(&work_dir).exists() {
-        error!("Work directory {} does not exist", work_dir);
+        error!("Work directory {work_dir} does not exist");
         std::process::exit(1);
     }
     std::env::set_current_dir(work_dir.clone()).unwrap();
 
-    info!("Server is running on port {} at {}", port, work_dir);
+    info!("Server is running on port {port} at {work_dir}");
     let pool = ThreadPool::new(4);
     for stream in listener.incoming() {
         let connection = stream.unwrap();
@@ -54,7 +62,7 @@ const NOT_FOUND_STATUS_LINE: &str = "HTTP/1.1 404 NOT FOUND";
 fn hello_connection(mut stream: TcpStream) {
     let buffer = BufReader::new(&stream);
     let http_request = buffer.lines().next().unwrap().unwrap();
-    info!("request: {}", http_request);
+    info!("request: {http_request}");
     let request_resource = http_request.split_whitespace().nth(1);
 
     if let Some(resource) = request_resource {
@@ -86,7 +94,7 @@ fn deal_not_found_resource() -> Vec<u8> {
 }
 
 fn deal_other_resource(resource: &str) -> Vec<u8> {
-    let current_path = format!(".{}", resource);
+    let current_path = format!(".{resource}");
     // 如果文件或目录不存在，返回404
     if !Path::new(&current_path).exists() {
         return deal_not_found_resource();
@@ -114,9 +122,7 @@ fn deal_other_resource(resource: &str) -> Vec<u8> {
             );
             response.into_bytes()
         }
-        Err(_) => {
-            deal_not_found_resource()
-        }
+        Err(_) => deal_not_found_resource(),
     }
 }
 
@@ -129,7 +135,7 @@ fn deal_root_resource(_resource: &str) -> Vec<u8> {
         let path = dir_entry.path();
         let path = path.to_str().unwrap();
 
-        let link_str = format!("<a href=\"{}\">{}</a><br/>", path, path);
+        let link_str = format!("<a href=\"{path}\">{path}</a><br/>");
         resources.push(link_str);
     }
     let resource_content = resources.join("");
@@ -142,5 +148,3 @@ fn deal_root_resource(_resource: &str) -> Vec<u8> {
     );
     response.into_bytes()
 }
-
-

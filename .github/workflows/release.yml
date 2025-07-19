@@ -39,6 +39,7 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
           override: true
+          components: rustfmt, clippy
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -50,6 +51,13 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run security audit
+        run: cargo audit || echo "Security audit failed, but continuing..."
+        continue-on-error: true
 
       - name: Build release binary
         run: |
