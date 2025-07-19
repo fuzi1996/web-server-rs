@@ -1,10 +1,15 @@
 name: Build
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Build version'
+        required: false
+        type: string
+        default: 'latest'
+  release:
+    types: [published, prereleased]
 
 jobs:
   build:
