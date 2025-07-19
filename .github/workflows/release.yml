@@ -16,6 +16,8 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         include:
@@ -53,10 +55,12 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Install cargo-audit
+        if: runner.os == 'Windows'
         shell: bash
         run: cargo install cargo-audit
 
       - name: Run security audit
+        if: runner.os == 'Windows'
         shell: bash
         run: cargo audit || echo "Security audit failed, but continuing..."
         continue-on-error: true
@@ -81,6 +85,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event.inputs.version != ''
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
