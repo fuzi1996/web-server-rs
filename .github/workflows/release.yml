@@ -53,13 +53,16 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Install cargo-audit
+        shell: bash
         run: cargo install cargo-audit
 
       - name: Run security audit
+        shell: bash
         run: cargo audit || echo "Security audit failed, but continuing..."
         continue-on-error: true
 
       - name: Build release binary
+        shell: bash
         run: |
           cargo build --release --target ${{ matrix.target }}
           if [ "${{ runner.os }}" = "Windows" ]; then
