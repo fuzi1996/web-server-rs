@@ -1,5 +1,5 @@
 use std::{sync::{mpsc, Arc, Mutex}, thread::{self}};
-
+use log::{debug, info};
 struct Worker {
     id: usize,
     thread: thread::JoinHandle<()>,
@@ -14,11 +14,11 @@ impl Worker {
                     let job = receiver.lock().unwrap().recv();
                     match job {
                         Ok(job) => {
-                            println!("Worker {id} got a job; executing.");
+                            debug!("Worker {id} got a job; executing.");
                             job();
                         }
                         Err(_) => {
-                            println!("Worker {id} disconnected; shutting down.");
+                            debug!("Worker {id} disconnected; shutting down.");
                             break;
                         }
                     }
@@ -60,7 +60,7 @@ impl Drop for ThreadPool {
         drop(self.sender.take());
 
         for worker in self.workers.drain(..) {
-            println!("Shutting down worker {}", worker.id);
+            info!("Shutting down worker {}", worker.id);
             worker.thread.join().unwrap();
         }
     }

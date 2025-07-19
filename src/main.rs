@@ -2,10 +2,19 @@ use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
+use log::{error, info};
 use web_server::ThreadPool;
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    env_logger::init();
+    let listener = match TcpListener::bind("127.0.0.1:7878") {
+        Ok(listener) => listener,
+        Err(e) => {
+            error!("Failed to bind to port 7878: {}", e);
+            std::process::exit(1);
+        }
+    };
+    info!("Server is running on port 7878");
     let pool = ThreadPool::new(4);
     for stream in listener.incoming() {
         let connection = stream.unwrap();
@@ -20,7 +29,7 @@ const NOT_FOUND_STATUS_LINE: &str = "HTTP/1.1 404 NOT FOUND";
 fn hello_connection(mut stream: TcpStream) {
     let buffer = BufReader::new(&stream);
     let http_request = buffer.lines().next().unwrap().unwrap();
-    println!("request: {}", http_request);
+    info!("request: {}", http_request);
     let request_resource = http_request.split_whitespace().nth(1);
 
     if let Some(resource) = request_resource {
@@ -59,7 +68,7 @@ fn deal_other_resource(resource: &str) -> Vec<u8> {
     }
     // 获取绝对路径
     let file_path = Path::new(&current_path).canonicalize().unwrap();
-    println!("{current_path} -> {}", file_path.display());
+    info!("{current_path} -> {}", file_path.display());
     // 当前路径必须在程序运行目录下
     let current_dir = std::env::current_dir().unwrap().canonicalize().unwrap();
     if !file_path.starts_with(current_dir) {
