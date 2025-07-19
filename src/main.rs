@@ -1,15 +1,17 @@
-use std::{env, fs};
+use log::{error, info, LevelFilter};
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
-use log::{error, info, LevelFilter};
+use std::{env, fs};
 use web_server::ThreadPool;
 
 fn main() {
     // 初始化日志
     // 如果没有配置日志级别，设置默认级别为info
     if let Ok(log_level) = std::env::var("LOG_LEVEL") {
-        let log_level = log_level.parse::<LevelFilter>().unwrap_or(LevelFilter::Info);
+        let log_level = log_level
+            .parse::<LevelFilter>()
+            .unwrap_or(LevelFilter::Info);
         env_logger::Builder::from_default_env()
             .filter_level(log_level)
             .target(env_logger::Target::Stdout)
@@ -22,7 +24,10 @@ fn main() {
     }
 
     let args: Vec<String> = env::args().collect();
-    let port = args.get(1).map(|s| s.parse::<u16>().unwrap_or(7878)).unwrap_or(7878);
+    let port = args
+        .get(1)
+        .map(|s| s.parse::<u16>().unwrap_or(7878))
+        .unwrap_or(7878);
     let listener = match TcpListener::bind(format!("127.0.0.1:{port}")) {
         Ok(listener) => listener,
         Err(e) => {
@@ -32,7 +37,10 @@ fn main() {
     };
 
     // 支持设置工作目录
-    let work_dir = args.get(2).map(|s| s.to_string()).unwrap_or(".".to_string());
+    let work_dir = args
+        .get(2)
+        .map(|s| s.to_string())
+        .unwrap_or(".".to_string());
     if !Path::new(&work_dir).exists() {
         error!("Work directory {work_dir} does not exist");
         std::process::exit(1);
@@ -114,9 +122,7 @@ fn deal_other_resource(resource: &str) -> Vec<u8> {
             );
             response.into_bytes()
         }
-        Err(_) => {
-            deal_not_found_resource()
-        }
+        Err(_) => deal_not_found_resource(),
     }
 }
 
@@ -142,5 +148,3 @@ fn deal_root_resource(_resource: &str) -> Vec<u8> {
     );
     response.into_bytes()
 }
-
-
