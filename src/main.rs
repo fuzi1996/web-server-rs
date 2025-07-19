@@ -2,12 +2,16 @@ use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
+use web_server::ThreadPool;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let pool = ThreadPool::new(4);
     for stream in listener.incoming() {
         let connection = stream.unwrap();
-        hello_connection(connection);
+        pool.execute(move || {
+            hello_connection(connection);
+        });
     }
 }
 
@@ -49,6 +53,10 @@ fn deal_not_found_resource() -> Vec<u8> {
 
 fn deal_other_resource(resource: &str) -> Vec<u8> {
     let current_path = format!(".{}", resource);
+    // 如果文件或目录不存在，返回404
+    if !Path::new(&current_path).exists() {
+        return deal_not_found_resource();
+    }
     // 获取绝对路径
     let file_path = Path::new(&current_path).canonicalize().unwrap();
     println!("{current_path} -> {}", file_path.display());
