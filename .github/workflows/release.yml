@@ -16,6 +16,8 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         include:
@@ -81,6 +83,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event.inputs.version != ''
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
