@@ -11,7 +11,7 @@
       "name": "Debug executable 'web-server'",
       "cargo": {
         "args": [
-          "build",
+          "run",
           "--bin=web-server",
           "--package=web-server"
         ],

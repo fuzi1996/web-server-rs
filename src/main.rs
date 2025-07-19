@@ -19,37 +19,51 @@ fn hello_connection(mut stream: TcpStream) {
     let request_resource = http_request.split_whitespace().nth(1);
 
     if let Some(resource) = request_resource {
-        if resource == "/" {
-            deal_root_resource(resource);
-            return;
+        let response = if resource == "/" {
+            deal_root_resource(resource)
         } else {
-            deal_other_resource(resource);
-            return;
-        }
+            deal_other_resource(resource)
+        };
+        stream.write_all(&response).unwrap();
+    } else {
+        stream.write_all(NOT_FOUND_STATUS_LINE.as_bytes()).unwrap();
     }
+}
 
-    // 读取404.html文件内容
+fn deal_not_found_resource() -> Vec<u8> {
     let not_found_content = match fs::read_to_string("404.html") {
         Ok(content) => content,
         Err(_) => {
             String::from("<h1>404 Not Found</h1><p>The requested resource was not found.</p>")
         }
     };
-
     let response = format!(
         "{}\r\nContent-Length:{}\r\n\r\n{}",
         NOT_FOUND_STATUS_LINE,
         not_found_content.len(),
         not_found_content
     );
-    stream.write_all(response.as_bytes()).unwrap();
+    response.into_bytes()
 }
 
 fn deal_other_resource(resource: &str) -> Vec<u8> {
     let file_path = format!("./{}", resource);
     println!("file_path: {}", file_path);
-    let file_content = fs::read_to_string(file_path).unwrap();
-    with_content_response(file_content)
+    
+    match fs::read_to_string(&file_path) {
+        Ok(file_content) => {
+            let response = format!(
+                "{}\r\nContent-Length:{}\r\n\r\n{}",
+                OK_STATUS_LINE,
+                file_content.len(),
+                file_content
+            );
+            response.into_bytes()
+        }
+        Err(_) => {
+            deal_not_found_resource()
+        }
+    }
 }
 
 fn deal_root_resource(_resource: &str) -> Vec<u8> {
@@ -66,15 +80,13 @@ fn deal_root_resource(_resource: &str) -> Vec<u8> {
     }
     let resource_content = resources.join("");
 
-    with_content_response(resource_content)
-}
-
-fn with_content_response(response: String) -> Vec<u8> {
     let response = format!(
         "{}\r\nContent-Length:{}\r\n\r\n{}",
         OK_STATUS_LINE,
-        response.len(),
-        response
+        resource_content.len(),
+        resource_content
     );
     response.into_bytes()
 }
+
+
