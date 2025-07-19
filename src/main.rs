@@ -1,4 +1,4 @@
-use std::fs;
+use std::{env, fs};
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
@@ -7,13 +7,18 @@ use web_server::ThreadPool;
 
 fn main() {
     env_logger::init();
-    let listener = match TcpListener::bind("127.0.0.1:7878") {
+
+    let args: Vec<String> = env::args().collect();
+    let port = args.get(1).unwrap();
+    let port = port.parse::<u16>().unwrap_or(7878);
+    let listener = match TcpListener::bind(format!("127.0.0.1:{}", port)) {
         Ok(listener) => listener,
         Err(e) => {
-            error!("Failed to bind to port 7878: {}", e);
+            error!("Failed to bind to port {}: {}", port, e);
             std::process::exit(1);
         }
     };
+
     info!("Server is running on port 7878");
     let pool = ThreadPool::new(4);
     for stream in listener.incoming() {
