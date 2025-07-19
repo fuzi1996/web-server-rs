@@ -22,8 +22,7 @@ fn main() {
     }
 
     let args: Vec<String> = env::args().collect();
-    let port = args.get(1).unwrap();
-    let port = port.parse::<u16>().unwrap_or(7878);
+    let port = args.get(1).map(|s| s.parse::<u16>().unwrap_or(7878)).unwrap_or(7878);
     let listener = match TcpListener::bind(format!("127.0.0.1:{}", port)) {
         Ok(listener) => listener,
         Err(e) => {
@@ -33,8 +32,7 @@ fn main() {
     };
 
     // 支持设置工作目录
-    let work_dir = args.get(2).unwrap();
-    let work_dir = work_dir.parse::<String>().unwrap_or(".".to_string());
+    let work_dir = args.get(2).map(|s| s.to_string()).unwrap_or(".".to_string());
     if !Path::new(&work_dir).exists() {
         error!("Work directory {} does not exist", work_dir);
         std::process::exit(1);
