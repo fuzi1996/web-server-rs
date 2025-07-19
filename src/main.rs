@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
+use std::path::Path;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
@@ -15,12 +16,12 @@ const NOT_FOUND_STATUS_LINE: &str = "HTTP/1.1 404 NOT FOUND";
 fn hello_connection(mut stream: TcpStream) {
     let buffer = BufReader::new(&stream);
     let http_request = buffer.lines().next().unwrap().unwrap();
-
+    println!("request: {}", http_request);
     let request_resource = http_request.split_whitespace().nth(1);
 
     if let Some(resource) = request_resource {
         let response = if resource == "/" {
-            deal_root_resource(resource)
+            deal_root_resource(".")
         } else {
             deal_other_resource(resource)
         };
@@ -47,9 +48,20 @@ fn deal_not_found_resource() -> Vec<u8> {
 }
 
 fn deal_other_resource(resource: &str) -> Vec<u8> {
-    let file_path = format!("./{}", resource);
-    println!("file_path: {}", file_path);
-    
+    let current_path = format!(".{}", resource);
+    // 获取绝对路径
+    let file_path = Path::new(&current_path).canonicalize().unwrap();
+    println!("{current_path} -> {}", file_path.display());
+    // 当前路径必须在程序运行目录下
+    let current_dir = std::env::current_dir().unwrap().canonicalize().unwrap();
+    if !file_path.starts_with(current_dir) {
+        return deal_not_found_resource();
+    }
+
+    // 判断是不是目录
+    if file_path.is_dir() {
+        return deal_root_resource(&current_path);
+    }
     match fs::read_to_string(&file_path) {
         Ok(file_content) => {
             let response = format!(
@@ -67,7 +79,7 @@ fn deal_other_resource(resource: &str) -> Vec<u8> {
 }
 
 fn deal_root_resource(_resource: &str) -> Vec<u8> {
-    let read_dir = fs::read_dir(".").unwrap();
+    let read_dir = fs::read_dir(_resource).unwrap();
 
     let mut resources: Vec<String> = Vec::new();
     for dir in read_dir {
