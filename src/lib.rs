@@ -38,7 +38,7 @@ pub struct ThreadPool {
 impl ThreadPool {
     pub fn new(size: usize) -> ThreadPool {
         let (sender, receiver) = mpsc::channel();
-        let mut workers = Vec::with_capacity(size as usize);
+        let mut workers = Vec::with_capacity(size);
         let receiver = Arc::new(Mutex::new(receiver));
         for id in 0..size {
             workers.push(Worker::new(id,Arc::clone(&receiver)));
