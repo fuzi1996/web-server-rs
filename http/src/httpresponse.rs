@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::format, io::Write, net::TcpStream};
+use std::{collections::HashMap, fmt::Debug, io::Write};
 use crate::httprequest::HttpVersion;
 
 #[derive(Debug,PartialEq,Clone)]
@@ -49,14 +49,15 @@ impl<'a> HttpResponse<'a> {
     response
   }
 
-  pub fn send_response(&self, stream: &mut impl Write) -> Result<(), std::io::Error> {
-    let response_string = String::from(self.clone());
+  pub fn send_response(self, stream: &mut impl Write) -> Result<(), std::io::Error> {
+    let response_string = String::from(self);
+    println!("{}", response_string);
     let _ = stream.write_all(response_string.as_bytes());
     Ok(())
   }
 
-  pub fn version(&self) -> &HttpVersion {
-    self.version
+  pub fn version(&self) -> String {
+    String::from(self.version)
   }
 
   pub fn status_code(&self) -> &str {
@@ -126,4 +127,20 @@ mod tests {
     let response_string: String = String::from(response);
     assert_eq!(response_string, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\nHello, world!");
   }
+
+  #[test]
+  fn test_404_response() {
+    let response = HttpResponse::new("404", None, Some("Not Found".to_string()));
+    let response_string: String = String::from(response);
+    assert_eq!(response_string, "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: 9\r\n\r\nNot Found");
+  }
+
+  #[test]
+  fn test_500_response() {
+    let response = HttpResponse::new("500", None, Some("Internal Server Error".to_string()));
+    let response_string: String = String::from(response);
+    assert_eq!(response_string, "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\nContent-Length: 21\r\n\r\nInternal Server Error");
+  }
+  
+  
 }

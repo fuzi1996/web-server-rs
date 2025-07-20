@@ -34,12 +34,12 @@ impl From<&str> for HttpVersion {
     }
 }
 
-impl std::fmt::Display for HttpVersion {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            HttpVersion::HTTP10 => write!(f, "HTTP/1.0"),
-            HttpVersion::HTTP11 => write!(f, "HTTP/1.1"),
-            HttpVersion::UNINITIALIZED => write!(f, "UNINITIALIZED"),
+impl From<&HttpVersion> for String {
+    fn from(version: &HttpVersion) -> Self {
+        match version {
+            HttpVersion::HTTP10 => "HTTP/1.0".to_string(),
+            HttpVersion::HTTP11 => "HTTP/1.1".to_string(),
+            HttpVersion::UNINITIALIZED => "UNINITIALIZED".to_string(),
         }
     }
 }
@@ -57,6 +57,16 @@ pub struct HttpRequest {
     version: HttpVersion,
     headers: HashMap<String, String>,
     body: String,
+}
+
+impl HttpRequest {
+    pub fn resource_path(&self) -> &str {
+        match &self.resource {
+            HttpResource::PATH(path) => path,
+            HttpResource::UNINITIALIZED => "",
+        }
+    }
+    
 }
 
 impl From<String> for HttpRequest {
