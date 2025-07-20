@@ -61,20 +61,22 @@ const OK_STATUS_LINE: &str = "HTTP/1.1 200 OK";
 const NOT_FOUND_STATUS_LINE: &str = "HTTP/1.1 404 NOT FOUND";
 fn hello_connection(mut stream: TcpStream) {
     let buffer = BufReader::new(&stream);
-    let http_request = buffer.lines().next().unwrap().unwrap();
-    info!("request: {http_request}");
-    let request_resource = http_request.split_whitespace().nth(1);
+    println!("buffer: {:#?}", buffer.lines().map(|l| l.unwrap()).collect::<Vec<_>>());
+    // let mut lines = buffer.lines();
+    // let http_request = lines.next().unwrap().unwrap();
+    // info!("request: {http_request}");
+    // let request_resource = http_request.split_whitespace().nth(1);
 
-    if let Some(resource) = request_resource {
-        let response = if resource == "/" {
-            deal_root_resource(".")
-        } else {
-            deal_other_resource(resource)
-        };
-        stream.write_all(&response).unwrap();
-    } else {
-        stream.write_all(NOT_FOUND_STATUS_LINE.as_bytes()).unwrap();
-    }
+    // if let Some(resource) = request_resource {
+    //     let response = if resource == "/" {
+    //         deal_root_resource(".")
+    //     } else {
+    //         deal_other_resource(resource)
+    //     };
+    //     stream.write_all(&response).unwrap();
+    // } else {
+    //     stream.write_all(NOT_FOUND_STATUS_LINE.as_bytes()).unwrap();
+    // }
 }
 
 fn deal_not_found_resource() -> Vec<u8> {
