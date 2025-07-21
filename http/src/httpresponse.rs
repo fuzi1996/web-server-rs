@@ -51,8 +51,8 @@ impl<'a> HttpResponse<'a> {
 
   pub fn send_response(self, stream: &mut impl Write) -> Result<(), std::io::Error> {
     let response_string = String::from(self);
-    println!("{}", response_string);
-    let _ = stream.write_all(response_string.as_bytes());
+    stream.write_all(response_string.as_bytes())?;
+    stream.flush()?;
     Ok(())
   }
 
@@ -88,7 +88,7 @@ impl<'a> HttpResponse<'a> {
 }
 
 impl<'a> From<HttpResponse<'a>> for String {
-  fn from(response: HttpResponse) -> String {
+  fn from(response: HttpResponse<'a>) -> String {
     let response = response.clone();
     format!("{} {} {}\r\n{}Content-Length: {}\r\n\r\n{}", &response.version(), &response.status_code(), &response.status_text(), &response.headers(),response.body().len(), &response.body())
   }
