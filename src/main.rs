@@ -6,6 +6,21 @@ use log::LevelFilter;
 fn main() {
     init_log();
 
+    // 如果参数为 -h --help 打印帮助信息
+    if args().nth(1).unwrap_or("".to_string()) == "-h" || args().nth(1).unwrap_or("".to_string()) == "--help" {
+        println!("Usage: httpserver [options] [host] [port] [work_dir]");
+        println!("Options:");
+        println!("  -h, --help     Print this help message");
+        println!("  -v, --version  Print the version number");
+        return;
+    }
+
+    // 如果参数为 -v --version 打印版本信息
+    if args().nth(1).unwrap_or("".to_string()) == "-v" || args().nth(1).unwrap_or("".to_string()) == "--version" {
+        println!("httpserver 0.1.0");
+        return;
+    }
+
     let host = env::var("HOST").unwrap_or("127.0.0.1".to_string());
     let port = args().nth(1).unwrap_or("7878".to_string());
     let work_dir = args().nth(2).unwrap_or(".".to_string());
