@@ -18,7 +18,9 @@ fn main() {
 
     // 如果参数为 -v --version 打印版本信息
     if args().nth(1).unwrap_or("".to_string()) == "-v" || args().nth(1).unwrap_or("".to_string()) == "--version" {
-        println!("httpserver 0.1.0");
+        let version = env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "unknown".to_string());
+        let name = env::var("CARGO_PKG_NAME").unwrap_or_else(|_| "web-server".to_string());
+        println!("{} {}", name, version);
         return;
     }
 
