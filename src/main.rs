@@ -26,7 +26,8 @@ fn main() {
 
     let host = env::var("HOST").unwrap_or("127.0.0.1".to_string());
     let port = args().nth(1).unwrap_or("7878".to_string());
-    let work_dir = args().nth(2).unwrap_or(".".to_string());
+    // let work_dir = args().nth(2).unwrap_or(".".to_string());
+    let work_dir = "C:\\Users\\11829\\repo\\trpl-zh-cn\\book";
 
     let server = HttpServer::new(&host, port.parse().unwrap(), &work_dir);
     server.run();

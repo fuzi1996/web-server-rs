@@ -8,6 +8,7 @@ pub struct HttpResponse<'a> {
   status_text: &'a str,
   headers: Option<HashMap<&'a str, &'a str>>,
   body: Option<String>,
+  binary_body: Option<Vec<u8>>,
 }
 
 impl<'a> Default for HttpResponse<'a> {
@@ -18,6 +19,7 @@ impl<'a> Default for HttpResponse<'a> {
       status_text: "OK",
       headers: None,
       body: None,
+      binary_body: None,
     }
   }
 }
@@ -49,11 +51,50 @@ impl<'a> HttpResponse<'a> {
     response
   }
 
-  pub fn send_response(self, stream: &mut impl Write) -> Result<(), std::io::Error> {
-    let response_string = String::from(self);
-    stream.write_all(response_string.as_bytes())?;
-    stream.flush()?;
+  pub fn new_binary(status_code: &'a str, headers: Option<HashMap<&'a str, &'a str>>, binary_body: Option<Vec<u8>>) -> HttpResponse<'a> {
+    let mut response = HttpResponse::default();
+    if status_code != "200" {
+      response.status_code = status_code;
+    }
+
+    response.headers = headers;
+    response.binary_body = binary_body;
+
+    match status_code {
+      "200" => response.status_text = "OK",
+      "404" => response.status_text = "Not Found",
+      "500" => response.status_text = "Internal Server Error",
+      _ => response.status_text = "Not Found",
+    }
+    response
+  }
+
+  pub fn send_response(mut self, stream: &mut impl Write) -> Result<(), std::io::Error> {
+    if let Some(binary_body) = self.binary_body.take() {
+      // 发送二进制响应
+      let response_string = self.to_binary_response_string(&binary_body);
+      stream.write_all(response_string.as_bytes())?;
+      stream.write_all(&binary_body)?;
+      stream.flush()?;
+    } else {
+      // 发送文本响应
+      let response_string = String::from(self);
+      stream.write_all(response_string.as_bytes())?;
+      stream.flush()?;
+    }
     Ok(())
+  }
+
+  fn to_binary_response_string(&self, binary_body: &[u8]) -> String {
+    let mut headers = String::new();
+    if let Some(map) = &self.headers {
+      for (key, value) in map.iter() {
+        headers = format!("{}{}: {}\r\n", headers, key, value);
+      }
+    }
+    format!("{} {} {}\r\n{}Content-Length: {}\r\n\r\n", 
+            &self.version(), &self.status_code(), &self.status_text(), 
+            headers, binary_body.len())
   }
 
   pub fn version(&self) -> String {
@@ -84,6 +125,10 @@ impl<'a> HttpResponse<'a> {
       None => "",
     }
   }
+
+  pub fn binary_body(&self) -> Option<&[u8]> {
+    self.binary_body.as_deref()
+  }
   
 }
 
@@ -109,6 +154,7 @@ mod tests {
       status_text: "OK",
       headers: Some(headers),
       body: Some("Hello, world!".to_string()),
+      binary_body: None,
     };
     let response_string: String = response.into();
     assert_eq!(response_string, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\nHello, world!");

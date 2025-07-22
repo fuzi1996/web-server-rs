@@ -4,7 +4,7 @@ use std::path::Path;
 
 use http::httprequest::HttpRequest;
 use http::httpresponse::HttpResponse;
-use log::info;
+use log::{info, warn};
 
 pub trait Handler {
     fn handle_request(request: HttpRequest) -> HttpResponse<'static>;
@@ -30,8 +30,11 @@ impl Handler for StaticResourceHandler {
         let path = request.resource_path();
         let work_dir = std::env::current_dir().unwrap();
 
-        let current_path = format!(".{path}");
+        // ./FontAwesome/fonts/fontawesome-webfont.woff?v=4.7.0 把参数去掉
+        let path = path.split('?').next().unwrap_or(path);
+        let current_path = format!("{}/{path}",work_dir.display());
         if !Path::new(&current_path).exists() {
+            warn!("{} not found", current_path);
             return NotFoundHandler::handle_request(request);
         }
 
@@ -40,7 +43,8 @@ impl Handler for StaticResourceHandler {
         info!("{current_path} -> {}", file_path.display());
         // 当前路径必须在程序运行目录下
         let current_dir = work_dir.canonicalize().unwrap();
-        if !file_path.starts_with(current_dir) {
+        if !file_path.starts_with(&current_dir) {
+            warn!("{} is not in {}", current_path, current_dir.to_str().unwrap());
             return NotFoundHandler::handle_request(request);
         }
 
@@ -61,30 +65,28 @@ impl Handler for NotFoundHandler {
 }
 
 fn deal_file_resource(file_path: &str) -> HttpResponse<'static> {
-    let file_content = fs::read_to_string(file_path);
-
-    if file_content.is_err() {
-        return HttpResponse::new("404", None, None);
-    }
-
-    let file_content = file_content.unwrap();
-
     let mut header = HashMap::new();
+    
+    // 判断文件类型并设置相应的Content-Type
     if file_path.ends_with(".html") {
         header.insert("Content-Type", "text/html; charset=utf-8");
     } else if file_path.ends_with(".css") {
         header.insert("Content-Type", "text/css; charset=utf-8");
     } else if file_path.ends_with(".js") {
         header.insert("Content-Type", "text/javascript; charset=utf-8");
-    } else if file_path.ends_with(".html") {
-        header.insert("Content-Type", "text/html");
-    } else if file_path.ends_with(".css") {
-        header.insert("Content-Type", "text/css");
-    } else if file_path.ends_with(".js") {
-        header.insert("Content-Type", "text/javascript");
+    } else if file_path.ends_with(".json") {
+        header.insert("Content-Type", "application/json; charset=utf-8");
+    } else if file_path.ends_with(".xml") {
+        header.insert("Content-Type", "application/xml; charset=utf-8");
+    } else if file_path.ends_with(".txt") {
+        header.insert("Content-Type", "text/plain; charset=utf-8");
+    } else if file_path.ends_with(".csv") {
+        header.insert("Content-Type", "text/csv; charset=utf-8");
+    } else if file_path.ends_with(".md") {
+        header.insert("Content-Type", "text/markdown; charset=utf-8");
     } else if file_path.ends_with(".png") {
         header.insert("Content-Type", "image/png");
-    } else if file_path.ends_with(".jpg") {
+    } else if file_path.ends_with(".jpg") || file_path.ends_with(".jpeg") {
         header.insert("Content-Type", "image/jpeg");
     } else if file_path.ends_with(".gif") {
         header.insert("Content-Type", "image/gif");
@@ -102,18 +104,8 @@ fn deal_file_resource(file_path: &str) -> HttpResponse<'static> {
         header.insert("Content-Type", "font/eot");
     } else if file_path.ends_with(".otf") {
         header.insert("Content-Type", "font/otf");
-      } else if file_path.ends_with(".wasm") {
+    } else if file_path.ends_with(".wasm") {
         header.insert("Content-Type", "application/wasm");
-    } else if file_path.ends_with(".json") {
-        header.insert("Content-Type", "application/json");
-    } else if file_path.ends_with(".xml") {
-        header.insert("Content-Type", "application/xml");
-    } else if file_path.ends_with(".txt") {
-        header.insert("Content-Type", "text/plain");
-    } else if file_path.ends_with(".csv") {
-        header.insert("Content-Type", "text/csv");
-    } else if file_path.ends_with(".md") {
-        header.insert("Content-Type", "text/markdown");
     } else if file_path.ends_with(".pdf") {
         header.insert("Content-Type", "application/pdf");
     } else if file_path.ends_with(".zip") {
@@ -127,7 +119,38 @@ fn deal_file_resource(file_path: &str) -> HttpResponse<'static> {
     } else {
         header.insert("Content-Type", "application/octet-stream");
     }
-    HttpResponse::new("200", Some(header), Some(file_content))
+
+    // 判断是否为二进制文件
+    let is_binary = file_path.ends_with(".png") || file_path.ends_with(".jpg") || file_path.ends_with(".jpeg") ||
+                    file_path.ends_with(".gif") || file_path.ends_with(".ico") || file_path.ends_with(".svg") ||
+                    file_path.ends_with(".woff") || file_path.ends_with(".woff2") || file_path.ends_with(".ttf") ||
+                    file_path.ends_with(".eot") || file_path.ends_with(".otf") || file_path.ends_with(".wasm") ||
+                    file_path.ends_with(".pdf") || file_path.ends_with(".zip") || file_path.ends_with(".tar") ||
+                    file_path.ends_with(".gz") || file_path.ends_with(".bz2");
+
+    if is_binary {
+        // 读取二进制文件
+        match fs::read(file_path) {
+            Ok(binary_content) => {
+                HttpResponse::new_binary("200", Some(header), Some(binary_content))
+            }
+            Err(e) => {
+                warn!("{} read error: {}", file_path, e);
+                HttpResponse::new("404", None, None)
+            }
+        }
+    } else {
+        // 读取文本文件
+        match fs::read_to_string(file_path) {
+            Ok(text_content) => {
+                HttpResponse::new("200", Some(header), Some(text_content))
+            }
+            Err(e) => {
+                warn!("{} read error: {}", file_path, e);
+                HttpResponse::new("404", None, None)
+            }
+        }
+    }
 }
 
 fn deal_dir_resource(_resource: &str, _current_path: &str) -> HttpResponse<'static> {
