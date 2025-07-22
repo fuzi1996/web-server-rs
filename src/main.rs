@@ -8,7 +8,8 @@ fn main() {
 
     // 如果参数为 -h --help 打印帮助信息
     if args().nth(1).unwrap_or("".to_string()) == "-h" || args().nth(1).unwrap_or("".to_string()) == "--help" {
-        println!("Usage: httpserver [options] [host] [port] [work_dir]");
+        println!("Usage: httpserver [port] [work_dir]");
+        println!("Usage: httpserver [options]");
         println!("Options:");
         println!("  -h, --help     Print this help message");
         println!("  -v, --version  Print the version number");
