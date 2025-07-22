@@ -114,6 +114,6 @@ try {
     Main
 }
 catch {
-    Write-Error "构建过程中发生错误: $($_.Exception.Message)"
+    Write-Error "Build process error: $($_.Exception.Message)"
     exit 1
 } 
