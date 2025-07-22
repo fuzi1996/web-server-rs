@@ -1,15 +1,13 @@
 use crate::handler::{Handler, StaticResourceHandler};
 use http::httprequest::HttpRequest;
-use http::httpresponse::HttpResponse;
 use log::error;
-use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};
 use std::net::TcpStream;
 
 pub struct Route {}
 
 impl Route {
-    pub fn route(mut connection: TcpStream) {;
+    pub fn route(mut connection: TcpStream) {
         let mut buffer = BufReader::new(&connection);
         
         // 读取完整的HTTP请求
@@ -20,15 +18,10 @@ impl Route {
                 return;
             }
         };
+        
         let request: HttpRequest = HttpRequest::from(request_string);
 
-        let path = request.resource_path();
-        let mut response = HttpResponse::new("404", None, None);
-        if path == "/" {
-            response = StaticResourceHandler::handle_request(request);
-        } else if path.ends_with(".html") {
-            response = StaticResourceHandler::handle_request(request);
-        }
+        let response = StaticResourceHandler::handle_request(request);
 
         if let Err(e) = response.send_response(&mut connection) {
             error!("Error sending response: {}", e);
