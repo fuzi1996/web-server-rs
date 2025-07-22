@@ -21,10 +21,13 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            executable: web-server
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            executable: web-server.exe
           - os: macos-latest
             target: x86_64-apple-darwin
+            executable: web-server
 
     steps:
       - name: Checkout code
@@ -65,8 +68,51 @@ jobs:
         shell: bash
         run: cargo build --release --target ${{ matrix.target }}
 
+      - name: Create release directory
+        shell: bash
+        run: |
+          mkdir -p release
+          cp target/${{ matrix.target }}/release/${{ matrix.executable }} release/
+
+      - name: Generate MD5 checksum
+        shell: bash
+        run: |
+          cd release
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            # Windows with PowerShell
+            powershell -Command "Get-FileHash -Algorithm MD5 '${{ matrix.executable }}' | Select-Object -ExpandProperty Hash | Out-File -FilePath '${{ matrix.executable }}.md5' -Encoding ASCII"
+          else
+            # Linux/macOS
+            md5sum ${{ matrix.executable }} > ${{ matrix.executable }}.md5
+          fi
+
+      - name: Create zip archive
+        shell: bash
+        run: |
+          cd release
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            # Windows with PowerShell
+            powershell -Command "Compress-Archive -Path * -DestinationPath '../web-server-${{ matrix.target }}.zip' -Force"
+          else
+            # Linux/macOS
+            zip -r ../web-server-${{ matrix.target }}.zip .
+          fi
+
+      - name: Generate zip MD5 checksum
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            # Windows with PowerShell
+            powershell -Command "Get-FileHash -Algorithm MD5 'web-server-${{ matrix.target }}.zip' | Select-Object -ExpandProperty Hash | Out-File -FilePath 'web-server-${{ matrix.target }}.zip.md5' -Encoding ASCII"
+          else
+            # Linux/macOS
+            md5sum web-server-${{ matrix.target }}.zip > web-server-${{ matrix.target }}.zip.md5
+          fi
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/ 
+          name: web-server-${{ matrix.target }}
+          path: |
+            web-server-${{ matrix.target }}.zip
+            web-server-${{ matrix.target }}.zip.md5 
