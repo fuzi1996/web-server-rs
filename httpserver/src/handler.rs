@@ -15,7 +15,7 @@ pub trait Handler {
         let workspace_root = Path::new(manifest_dir).parent().unwrap();
         let default_path = format!("{}/public", workspace_root.display());
         let public_path = env::var("PUBLIC_PATH").unwrap_or(default_path);
-        let file_path = format!("{}/{}", public_path, file_path);
+        let file_path = format!("{public_path}/{file_path}");
         if Path::new(&file_path).exists() {
             return Some(fs::read_to_string(file_path.as_str()).unwrap());
         }
@@ -34,7 +34,7 @@ impl Handler for StaticResourceHandler {
         let path = path.split('?').next().unwrap_or(path);
         let current_path = format!("{}/{path}",work_dir.display());
         if !Path::new(&current_path).exists() {
-            warn!("{} not found", current_path);
+            warn!("{current_path} not found");
             return NotFoundHandler::handle_request(request);
         }
 
@@ -52,7 +52,7 @@ impl Handler for StaticResourceHandler {
             return deal_dir_resource(file_path.to_str().unwrap(),path);
         }
 
-        return deal_file_resource(file_path.to_str().unwrap());
+        deal_file_resource(file_path.to_str().unwrap())
     }
 }
 
@@ -135,7 +135,7 @@ fn deal_file_resource(file_path: &str) -> HttpResponse<'static> {
                 HttpResponse::new_binary("200", Some(header), Some(binary_content))
             }
             Err(e) => {
-                warn!("{} read error: {}", file_path, e);
+                warn!("{file_path} read error: {e}");
                 HttpResponse::new("404", None, None)
             }
         }
@@ -146,7 +146,7 @@ fn deal_file_resource(file_path: &str) -> HttpResponse<'static> {
                 HttpResponse::new("200", Some(header), Some(text_content))
             }
             Err(e) => {
-                warn!("{} read error: {}", file_path, e);
+                warn!("{file_path} read error: {e}");
                 HttpResponse::new("404", None, None)
             }
         }
@@ -170,7 +170,7 @@ fn deal_dir_resource(_resource: &str, _current_path: &str) -> HttpResponse<'stat
         } else {
             "/".to_string()
         };
-        navigation = format!("<div class='nav'><a href=\"{}\">← 返回上级目录</a></div>", parent_path);
+        navigation = format!("<div class='nav'><a href=\"{parent_path}\">← 返回上级目录</a></div>");
     }
     
     for dir in read_dir {
@@ -182,9 +182,9 @@ fn deal_dir_resource(_resource: &str, _current_path: &str) -> HttpResponse<'stat
         
         // 构建相对路径
         let relative_path = if _current_path == "/" {
-            format!("/{}", file_name)
+            format!("/{file_name}")
         } else {
-            format!("{}/{}", _current_path, file_name)
+            format!("{_current_path}/{file_name}")
         };
 
         // 判断是文件还是目录，添加不同的图标
@@ -194,7 +194,7 @@ fn deal_dir_resource(_resource: &str, _current_path: &str) -> HttpResponse<'stat
             "📄"
         };
 
-        let link_str = format!("<div class='item'><a href=\"{}\">{} {}</a></div>", relative_path, icon, file_name);
+        let link_str = format!("<div class='item'><a href=\"{relative_path}\">{icon} {file_name}</a></div>");
         resources.push(link_str);
     }
     

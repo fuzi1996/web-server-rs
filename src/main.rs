@@ -20,7 +20,7 @@ fn main() {
     if args().nth(1).unwrap_or("".to_string()) == "-v" || args().nth(1).unwrap_or("".to_string()) == "--version" {
         let version = env!("CARGO_PKG_VERSION");
         let name = env!("CARGO_PKG_NAME");
-        println!("{} {}", name, version);
+        println!("{name} {version}");
         return;
     }
 
@@ -29,7 +29,7 @@ fn main() {
     // let work_dir = args().nth(2).unwrap_or(".".to_string());
     let work_dir = "C:\\Users\\11829\\repo\\trpl-zh-cn\\book";
 
-    let server = HttpServer::new(&host, port.parse().unwrap(), &work_dir);
+    let server = HttpServer::new(&host, port.parse().unwrap(), work_dir);
     server.run();
 }
 

@@ -14,7 +14,7 @@ impl Route {
         let request_string = match Self::read_full_request(&mut buffer) {
             Ok(content) => content,
             Err(e) => {
-                error!("Error reading request: {}", e);
+                error!("Error reading request: {e}");
                 return;
             }
         };
@@ -24,7 +24,7 @@ impl Route {
         let response = StaticResourceHandler::handle_request(request);
 
         if let Err(e) = response.send_response(&mut connection) {
-            error!("Error sending response: {}", e);
+            error!("Error sending response: {e}");
         }
     }
 
