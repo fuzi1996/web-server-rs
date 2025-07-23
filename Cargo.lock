@@ -91,6 +91,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "http"
+version = "0.2.0"
+
+[[package]]
+name = "httpserver"
+version = "0.2.0"
+dependencies = [
+ "env_logger",
+ "http",
+ "log",
+ "threadpool",
+]
+
+[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -232,6 +246,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "threadpool"
+version = "0.2.0"
+dependencies = [
+ "env_logger",
+ "log",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -245,9 +267,10 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "web-server"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "env_logger",
+ "httpserver",
  "log",
 ]
 
