@@ -89,7 +89,7 @@ impl<'a> HttpResponse<'a> {
     let mut headers = String::new();
     if let Some(map) = &self.headers {
       for (key, value) in map.iter() {
-        headers = format!("{}{}: {}\r\n", headers, key, value);
+        headers = format!("{headers}{key}: {value}\r\n");
       }
     }
     format!("{} {} {}\r\n{}Content-Length: {}\r\n\r\n", 

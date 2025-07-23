@@ -90,13 +90,11 @@ impl From<String> for HttpRequest {
             }else if line.contains(":") {
               let (key, value) = process_header(line);
               headers.insert(key, value);
-            }else{
-              if body.is_empty() {
+            }else if body.is_empty() {
                 body.push_str(line);
-              }else{
+            }else{
                 body.push_str("\n");
                 body.push_str(line);
-              }
             }
         }
 
