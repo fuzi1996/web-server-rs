@@ -93,7 +93,7 @@ impl From<String> for HttpRequest {
             }else if body.is_empty() {
                 body.push_str(line);
             }else{
-                body.push_str("\n");
+                body.push('\n');
                 body.push_str(line);
             }
         }
