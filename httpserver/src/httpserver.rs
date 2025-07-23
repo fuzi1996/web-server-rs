@@ -1,7 +1,7 @@
-use std::{net::TcpListener, path::Path};
-use log::{error, info};
-use threadpool::threadpool::ThreadPool;
 use crate::route::Route;
+use log::{error, info};
+use std::{net::TcpListener, path::Path};
+use threadpool::threadpool::ThreadPool;
 
 pub struct HttpServer<'a> {
     host: &'a str,

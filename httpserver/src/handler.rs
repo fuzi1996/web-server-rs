@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::{env, fs};
 use std::path::Path;
+use std::{env, fs};
 
 use http::httprequest::HttpRequest;
 use http::httpresponse::HttpResponse;
@@ -32,7 +32,7 @@ impl Handler for StaticResourceHandler {
 
         // ./FontAwesome/fonts/fontawesome-webfont.woff?v=4.7.0 把参数去掉
         let path = path.split('?').next().unwrap_or(path);
-        let current_path = format!("{}/{path}",work_dir.display());
+        let current_path = format!("{}/{path}", work_dir.display());
         if !Path::new(&current_path).exists() {
             warn!("{current_path} not found");
             return NotFoundHandler::handle_request(request);
@@ -44,12 +44,16 @@ impl Handler for StaticResourceHandler {
         // 当前路径必须在程序运行目录下
         let current_dir = work_dir.canonicalize().unwrap();
         if !file_path.starts_with(&current_dir) {
-            warn!("{} is not in {}", current_path, current_dir.to_str().unwrap());
+            warn!(
+                "{} is not in {}",
+                current_path,
+                current_dir.to_str().unwrap()
+            );
             return NotFoundHandler::handle_request(request);
         }
 
         if file_path.is_dir() {
-            return deal_dir_resource(file_path.to_str().unwrap(),path);
+            return deal_dir_resource(file_path.to_str().unwrap(), path);
         }
 
         deal_file_resource(file_path.to_str().unwrap())
@@ -66,7 +70,7 @@ impl Handler for NotFoundHandler {
 
 fn deal_file_resource(file_path: &str) -> HttpResponse<'static> {
     let mut header = HashMap::new();
-    
+
     // 判断文件类型并设置相应的Content-Type
     if file_path.ends_with(".html") {
         header.insert("Content-Type", "text/html; charset=utf-8");
@@ -121,12 +125,23 @@ fn deal_file_resource(file_path: &str) -> HttpResponse<'static> {
     }
 
     // 判断是否为二进制文件
-    let is_binary = file_path.ends_with(".png") || file_path.ends_with(".jpg") || file_path.ends_with(".jpeg") ||
-                    file_path.ends_with(".gif") || file_path.ends_with(".ico") || file_path.ends_with(".svg") ||
-                    file_path.ends_with(".woff") || file_path.ends_with(".woff2") || file_path.ends_with(".ttf") ||
-                    file_path.ends_with(".eot") || file_path.ends_with(".otf") || file_path.ends_with(".wasm") ||
-                    file_path.ends_with(".pdf") || file_path.ends_with(".zip") || file_path.ends_with(".tar") ||
-                    file_path.ends_with(".gz") || file_path.ends_with(".bz2");
+    let is_binary = file_path.ends_with(".png")
+        || file_path.ends_with(".jpg")
+        || file_path.ends_with(".jpeg")
+        || file_path.ends_with(".gif")
+        || file_path.ends_with(".ico")
+        || file_path.ends_with(".svg")
+        || file_path.ends_with(".woff")
+        || file_path.ends_with(".woff2")
+        || file_path.ends_with(".ttf")
+        || file_path.ends_with(".eot")
+        || file_path.ends_with(".otf")
+        || file_path.ends_with(".wasm")
+        || file_path.ends_with(".pdf")
+        || file_path.ends_with(".zip")
+        || file_path.ends_with(".tar")
+        || file_path.ends_with(".gz")
+        || file_path.ends_with(".bz2");
 
     if is_binary {
         // 读取二进制文件
@@ -142,9 +157,7 @@ fn deal_file_resource(file_path: &str) -> HttpResponse<'static> {
     } else {
         // 读取文本文件
         match fs::read_to_string(file_path) {
-            Ok(text_content) => {
-                HttpResponse::new("200", Some(header), Some(text_content))
-            }
+            Ok(text_content) => HttpResponse::new("200", Some(header), Some(text_content)),
             Err(e) => {
                 warn!("{file_path} read error: {e}");
                 HttpResponse::new("404", None, None)
@@ -157,7 +170,7 @@ fn deal_dir_resource(_resource: &str, _current_path: &str) -> HttpResponse<'stat
     let read_dir = fs::read_dir(_resource).unwrap();
 
     let mut resources: Vec<String> = Vec::new();
-    
+
     // 添加返回上级目录的链接（如果不是根目录）
     let mut navigation = String::new();
     if _current_path != "/" {
@@ -172,14 +185,14 @@ fn deal_dir_resource(_resource: &str, _current_path: &str) -> HttpResponse<'stat
         };
         navigation = format!("<div class='nav'><a href=\"{parent_path}\">← 返回上级目录</a></div>");
     }
-    
+
     for dir in read_dir {
         let dir_entry = dir.unwrap();
         let path = dir_entry.path();
-        
+
         // 获取文件名或目录名
         let file_name = path.file_name().unwrap().to_str().unwrap();
-        
+
         // 构建相对路径
         let relative_path = if _current_path == "/" {
             format!("/{file_name}")
@@ -188,16 +201,13 @@ fn deal_dir_resource(_resource: &str, _current_path: &str) -> HttpResponse<'stat
         };
 
         // 判断是文件还是目录，添加不同的图标
-        let icon = if path.is_dir() {
-            "📁"
-        } else {
-            "📄"
-        };
+        let icon = if path.is_dir() { "📁" } else { "📄" };
 
-        let link_str = format!("<div class='item'><a href=\"{relative_path}\">{icon} {file_name}</a></div>");
+        let link_str =
+            format!("<div class='item'><a href=\"{relative_path}\">{icon} {file_name}</a></div>");
         resources.push(link_str);
     }
-    
+
     let html_content = format!(
         r#"<!DOCTYPE html>
 <html>
@@ -230,7 +240,11 @@ fn deal_dir_resource(_resource: &str, _current_path: &str) -> HttpResponse<'stat
         _current_path,
         _current_path,
         navigation,
-        if resources.is_empty() { "<p>目录为空</p>".to_string() } else { resources.join("") }
+        if resources.is_empty() {
+            "<p>目录为空</p>".to_string()
+        } else {
+            resources.join("")
+        }
     );
 
     let mut header = HashMap::new();

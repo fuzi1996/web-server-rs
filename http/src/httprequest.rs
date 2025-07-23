@@ -66,7 +66,6 @@ impl HttpRequest {
             HttpResource::UNINITIALIZED => "",
         }
     }
-    
 }
 
 impl From<String> for HttpRequest {
@@ -87,12 +86,12 @@ impl From<String> for HttpRequest {
                 parsed_method = method;
                 parsed_resource = resource;
                 parsed_version = version;
-            }else if line.contains(":") {
-              let (key, value) = process_header(line);
-              headers.insert(key, value);
-            }else if body.is_empty() {
+            } else if line.contains(":") {
+                let (key, value) = process_header(line);
+                headers.insert(key, value);
+            } else if body.is_empty() {
                 body.push_str(line);
-            }else{
+            } else {
                 body.push('\n');
                 body.push_str(line);
             }
@@ -111,9 +110,17 @@ impl From<String> for HttpRequest {
 fn process_resource(resource: &str) -> (HttpMethod, HttpResource, HttpVersion) {
     let parts: Vec<&str> = resource.split_whitespace().collect();
     if parts.len() == 3 {
-      (parts[0].into(), HttpResource::PATH(parts[1].to_string()), parts[2].into())
-    }else{
-      (HttpMethod::UNINITIALIZED, HttpResource::UNINITIALIZED, HttpVersion::UNINITIALIZED)
+        (
+            parts[0].into(),
+            HttpResource::PATH(parts[1].to_string()),
+            parts[2].into(),
+        )
+    } else {
+        (
+            HttpMethod::UNINITIALIZED,
+            HttpResource::UNINITIALIZED,
+            HttpVersion::UNINITIALIZED,
+        )
     }
 }
 
@@ -146,7 +153,7 @@ mod tests {
         assert_eq!(HttpVersion::from("HTTP/1.1"), HttpVersion::HTTP11);
         let version: HttpVersion = "HTTP/2.0".into();
         assert_eq!(version, HttpVersion::UNINITIALIZED);
-    } 
+    }
 
     #[test]
     fn test_http_request_from_str() {
@@ -154,7 +161,10 @@ mod tests {
         assert_eq!(request.method, HttpMethod::GET);
         assert_eq!(request.resource, HttpResource::PATH("/".to_string()));
         assert_eq!(request.version, HttpVersion::HTTP11);
-        assert_eq!(request.headers.get("Host"), Some(&"localhost:8080".to_string()));
+        assert_eq!(
+            request.headers.get("Host"),
+            Some(&"localhost:8080".to_string())
+        );
         assert_eq!(request.headers.len(), 2);
         assert_eq!(request.body, "Hello, world!\nEnd Line.");
     }

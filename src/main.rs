@@ -7,7 +7,9 @@ fn main() {
     init_log();
 
     // 如果参数为 -h --help 打印帮助信息
-    if args().nth(1).unwrap_or("".to_string()) == "-h" || args().nth(1).unwrap_or("".to_string()) == "--help" {
+    if args().nth(1).unwrap_or("".to_string()) == "-h"
+        || args().nth(1).unwrap_or("".to_string()) == "--help"
+    {
         println!("Usage: httpserver [port] [work_dir]");
         println!("Usage: httpserver [options]");
         println!("Options:");
@@ -17,7 +19,9 @@ fn main() {
     }
 
     // 如果参数为 -v --version 打印版本信息
-    if args().nth(1).unwrap_or("".to_string()) == "-v" || args().nth(1).unwrap_or("".to_string()) == "--version" {
+    if args().nth(1).unwrap_or("".to_string()) == "-v"
+        || args().nth(1).unwrap_or("".to_string()) == "--version"
+    {
         let version = env!("CARGO_PKG_VERSION");
         let name = env!("CARGO_PKG_NAME");
         println!("{name} {version}");
